@@ -5,10 +5,10 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/pico-sdk/**",
-                "/usr/lib/gcc/arm-none-eabi/**"
+                "${workspaceFolder}/pico-sdk/src/common/pico_stdlib/include/pico/**"
             ],
             "defines": [],
-            "compilerPath": "/bin/arm-none-eabi-gcc",
+            "compilerPath": "/usr/local/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-g++",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-arm",
