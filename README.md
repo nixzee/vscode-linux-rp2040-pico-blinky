@@ -6,14 +6,14 @@ TODO
 
 # OS (Ubuntu) Setup
 
-For the sake of this example, will be installing Ubuntu 20.04 onto a RPI 4. If you are using a different OS, skip this section.
+<!-- For the sake of this example, will be installing Ubuntu 20.04 onto a RPI 4. If you are using a different OS, skip this section. -->
 
-## Install Ubuntu Server 20.04 LTS 64bit
+## Install Ubuntu Server 20.04 LTS 64bit on RPI 4.
 
-This will walk through the process of installing an OS onto the RPI. We will be using Unbuntu 20.04 vs Raspbaian. Although Rasbian is lighter and faster, we will use Ubuntu for ROS.
+This will walk through the process of installing an OS onto the RPI. We will be using Unbuntu 20.04 vs Raspbaian. The setup below was done from Windows 10 and SSH.
 
 1. Goto [Unbuntu for RPI](https://ubuntu.com/download/raspberry-pi) and download the "Ubuntu Server 20.04.1 LTS 64bit".
-2. Once downloaded, get a 32-64GB uSD Card. I prefer the [Samsung Endurace Card](https://www.amazon.com/Samsung-Endurance-64GB-Micro-Adapter/dp/B07B9KTLJZ/ref=sr_1_3?crid=3H02VHGHS6QMC&dchild=1&keywords=endurance+sd+card+64gb&qid=1612207637&sprefix=endurance+sd+card%2Caps%2C169&sr=8-3). Here is a [dated white paper](https://www.jeffgeerling.com/blog/2019/raspberry-pi-microsd-card-performance-comparison-2019) comparing uSD cards.
+2. Once downloaded, get a 32-64GB uSD Card. I prefer the [Samsung Endurace Card](https://www.amazon.com/Samsung-Endurance-64GB-Micro-Adapter/dp/B07B9KTLJZ/ref=sr_1_3?crid=3H02VHGHS6QMC&dchild=1&keywords=endurance+sd+card+64gb&qid=1612207637&sprefix=endurance+sd+card%2Caps%2C169&sr=8-3). Here is a [dated white paper](https://www.jeffgeerling.com/blog/2019/raspberry-pi-microsd-card-performance-comparison-2019) comparing uSD cards. Honestly, do your own research.
 3. Extract the image from the tar using [7Zip](https://www.7-zip.org/) by right clicking on the downloaded ".tar" and clicking extract.
 4. Use [Win32DiskImager](https://sourceforge.net/projects/win32diskimager/) or Etcher to flash the uSD card. Insert the card, open the tool, click the folder icon, select the ".img" file, press OK and then press write. This should take 5 minutes.
 5. Once completed, load the uSD card into a RPI4. Plug in a monitor and keyboard. Power on the RPI and wait about 5-10 minutes. For seem reason, the first boot takes a while for the password to be setup.
@@ -23,13 +23,14 @@ This will walk through the process of installing an OS onto the RPI. We will be 
     unbuntu@ubuntu:~$
     ```
 
-7. I recommend rebooting the device after 5 minutes at this point. It seems like there a processes that hang on the first boot. Im sure whats up but rebooting seems to fix it. If the reboot fails after some time, just power cycle it.
+7. I recommend rebooting the device after 5 minutes at this point. It seems like there a processes that hangs on the first boot. I'm not sure whats up but rebooting seems to fix it. If the reboot fails after some time, just power cycle it.
 
     ```shell
     sudo reboot
     ```
 
-8. Download [moba](https://mobaxterm.mobatek.net/download.html) if you do not already have it.
+8. Download [moba](https://mobaxterm.mobatek.net/download.html) if you do not already have it. You can also use Putty or perform from Powershell is you like punishment.
+
 9. You will need the IP for the next step. Use the following command
 
     ```shell
@@ -37,8 +38,10 @@ This will walk through the process of installing an OS onto the RPI. We will be 
     ```
 
 10. Open **Moba** and click on "sessions" > "ssh". You will need to put in the IP of the RPI into "Remote host". Leave everything else alone, and press "OK"
+
 11. If it connects succesffully, it will prompted you to loging with the username and password. You have now installed the OS and can remote into the RPI.
-12. Update and Upgrade.
+
+12. Update and Upgrade. You don't really need to reboot unless you want to.
 
     ```shell
     sudo apt update
@@ -52,9 +55,10 @@ This will walk through the process of installing an OS onto the RPI. We will be 
     sudo touch /etc/cloud/cloud-init.disabled
     sudo reboot
     ```
-## Setup Host and Hostname
 
-A [hostname](https://en.wikipedia.org/wiki/Hostname) is like an alias for the device on the network. Below are instructions on how to set the hostname. For this project, I would name one ```mobility-teleop``` and the other ```mobility-crane``` respectively.
+## Setup Host and Hostname (optional)
+
+A [hostname](https://en.wikipedia.org/wiki/Hostname) is like an alias for the device on the network. Below are instructions on how to set the hostname. 
 
 1. Open the hostname file and replace the old name with a new one.
 
@@ -73,14 +77,15 @@ A [hostname](https://en.wikipedia.org/wiki/Hostname) is like an alias for the de
     ```shell
     sudo reboot
     ```
-## Install ZSH
+
+## Install ZSH (optional)
 
 [ZSH](https://www.zsh.org/) and [oh-my-zsh](https://ohmyz.sh/) just to make life easier and make you look cool. You want to be cool.
 
 1. Install dependencies.
 
     ```shell
-    sudo apt install wget curl git -y
+    sudo apt install wget curl git
     ```
 
 2. Install **ZSH** and set as default shell.
@@ -131,27 +136,43 @@ A [hostname](https://en.wikipedia.org/wiki/Hostname) is like an alias for the de
 
 # Development Tools Setup
 
-## Dependencies
+This section will walk through all the tools you will need to develop and debug for the RP2040 Pico.
 
-sudo apt-get install git-lfs
+## git
+
+We will need to setup our [git](https://git-scm.com/) client.
+
+1. Install git and [git LFS](https://git-lfs.github.com/). The LFS is not used for anything related to source code.
+
+    ```shell
+    sudo apt-get install git git-lfs
+    git lfs install
+    ```
+
+2. Now we need to configure the git user info. Use your own user name and email.
+
+    ```shell
+    git config --global user.name "John Doe"
+    git config --global user.email johndoe@example.com
+    ```
 
 ## GNU Arm Embedded Toolchain
 
-We need to  install the [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) in order to cross compile for the RP2040. 
+We need to install the [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) in order to cross compile for the RP2040. We will be doing this because all new packages will not be release via Launchpad. [Here](https://launchpad.net/gcc-arm-embedded) is the article. [Here](https://askubuntu.com/questions/1243252/how-to-install-arm-none-eabi-gdb-on-ubuntu-20-04-lts-focal-fossa) is another explination. Also, I prefer choosing my toolchain. Put simply, we need to install the toolchain manaully. No biggie.
 
-1. Ensure we remove th
+1. Ensure we remove the package manager installed one if was installed prior.
 
     ```shell
-    sudo apt remove arm-none-eabi-gcc
+    gcc-arm-none-eabi
     ```
 
 2. First we need a few prerequisites.
 
     ```shell
-    sudo apt install build-essential libncurses5 libncurses5-dev stm32flash make
+    sudo apt install build-essential libncurses5 libncurses5-dev make
     ```
 
-3. Now get and extract.
+3. Now get and extract. I would check if there is newer release.
 
     ```shell
     sudo wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q4/gcc-arm-none-eabi-10-2020-q4-major-aarch64-linux.tar.bz2
@@ -161,7 +182,7 @@ We need to  install the [GNU Arm Embedded Toolchain](https://developer.arm.com/t
     sudo tar -C /usr/local -xvf gcc-arm-none-eabi-10-2020-q4-major-aarch64-linux.tar.bz2
     ```
 
-4. Open your rc (~/.zshrc or whatever shell you use).
+4. Open your run commands file (~/.zshrc or whatever shell you use).
 
     ```shell
     nano ~/.zshrc
@@ -180,17 +201,35 @@ We need to  install the [GNU Arm Embedded Toolchain](https://developer.arm.com/t
     source ~/.zshrc
     ```
 
-6. Finally, test by getting the version.
+7. Finally, test by getting the version.
 
     ```shell
     arm-none-eabi-gcc --version
     ```
 
+    You should see something like this:
+
+    ```console
+    ubuntu@node1  ~  arm-none-eabi-gcc --version
+    arm-none-eabi-gcc (GNU Arm Embedded Toolchain 10-2020-q4-major) 10.2.1 20201103 (release)
+    Copyright (C) 2020 Free Software Foundation, Inc.
+    This is free software; see the source for copying conditions.  There is NO
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    ```
+
 ## Pico Probe
+
+In order to debug the Pico, we will need a SWD debugger. TODO More info can be found in [Getting Started](https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf#page=58).
+
+1. You can download the UF2 file for PicoProbe. Raspberry does have a repo where you can build it manually but lets skip that and save some time. Goto the [link](https://www.raspberrypi.org/documentation/rp2040/getting-started/#board-specifications) and download the UF2 File.
+
+2. Now take on of the Picos, plugin the micro USB cable into it. While holding down the **BOOTSEL** button, plug the USB cable into the computer. This will put the Pico in a bootloader mode and should show in Windows as a new drive.
+
+3. Now copy the UF2 file over to the Pico. In windows you should see a new drive under "This PC". Once copied over then Pico will reboot and you should have a solid green LED.
 
 ## OpenOCD
 
-This section will walk you through building and installing the OpenOCD for PicoProbe. At this time, OpenOCD does not officially support Rasperry Pi Pico so we need to build from their [branch](https://github.com/raspberrypi/openocd/tree/picoprobe).
+This section will walk you through building and installing the OpenOCD for PicoProbe. At this time, OpenOCD does not officially support Rasperry Pi Pico so we need to build from their [branch](https://github.com/raspberrypi/openocd/tree/picoprobe). This is largely the same as what is in the [Getting Started](https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf#page=58).
 
 1. We need to remove the official OpenOCD if present.
 
@@ -204,13 +243,13 @@ This section will walk you through building and installing the OpenOCD for PicoP
     sudo apt install pkg-config autoconf automake autoconf build-essential texinfo libtool libftdi-dev libusb-1.0-0-dev
     ```
 
-3. Clone the branch.
+3. Clone the branch from home directory.
 
     ```shell
-    git clone https://github.com/raspberrypi/openocd.git --branch picoprobe --depth=1 --no-single -branch
+    git clone https://github.com/raspberrypi/openocd.git --branch picoprobe --depth=1 --no-single
     ```
 
-4. Build OpenOCD for Pico Probe since that is what we will use to debug. You may need to run the bootstrap multiple times in order for it to work.
+4. Build OpenOCD for Pico Probe since that is what we will use to debug. You may need to run the bootstrap multiple times in order for it to work. For some reason, it always fails the first time for me.
 
     ```shell
     cd openocd
@@ -254,13 +293,26 @@ This section will walk you through building and installing the OpenOCD for PicoP
     Info : Listening on port 3333 for gdb connections
     ```
 
-
-
 # Development Enviroment Setup
 
 ## VS Code
 
 ## Cloning from GitHub
+
+Now we will pull the repo.
+
+1. From your home directory, clone the repo.
+
+    ```shell
+    git clone https://github.com/nixzee/vscode-linux-rp2040-pico-blinky
+    ```
+
+2. Now enter the directory and get submodules.
+
+    ```shell
+    cd vscode-linux-rp2040-pico-blinky
+    git submodule update --init --recursive
+    ```
 
 # Debug
 
