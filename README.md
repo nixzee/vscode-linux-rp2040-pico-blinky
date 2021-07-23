@@ -131,15 +131,66 @@ A [hostname](https://en.wikipedia.org/wiki/Hostname) is like an alias for the de
 
 # Development Tools Setup
 
-# Dependencies
+## Dependencies
+
+sudo apt-get install git-lfs
 
 ## GNU Arm Embedded Toolchain
+
+We need to  install the [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) in order to cross compile for the RP2040. 
+
+1. Ensure we remove th
+
+    ```shell
+    sudo apt remove arm-none-eabi-gcc
+    ```
+
+2. First we need a few prerequisites.
+
+    ```shell
+    sudo apt install build-essential libncurses5 libncurses5-dev stm32flash make
+    ```
+
+3. Now get and extract.
+
+    ```shell
+    sudo wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/10-2020q4/gcc-arm-none-eabi-10-2020-q4-major-aarch64-linux.tar.bz2
+    ```
+
+    ```shell
+    sudo tar -C /usr/local -xvf gcc-arm-none-eabi-10-2020-q4-major-aarch64-linux.tar.bz2
+    ```
+
+4. Open your rc (~/.zshrc or whatever shell you use).
+
+    ```shell
+    nano ~/.zshrc
+    ```
+
+5. Now add the path to the end of your rc.
+
+    ```shell
+    # GCC
+    export PATH=$PATH:/usr/local/gcc-arm-none-eabi-10-2020-q4-major/bin
+    ```
+
+6. Save, close, and source the file.
+
+    ```shell
+    source ~/.zshrc
+    ```
+
+6. Finally, test by getting the version.
+
+    ```shell
+    arm-none-eabi-gcc --version
+    ```
 
 ## Pico Probe
 
 ## OpenOCD
 
-This section will walk you through building and installing the OpenOCD for PicoProbe. At this time, OpenOCD does not officially support Rasperry Pi Pico so we need to build from their branch.
+This section will walk you through building and installing the OpenOCD for PicoProbe. At this time, OpenOCD does not officially support Rasperry Pi Pico so we need to build from their [branch](https://github.com/raspberrypi/openocd/tree/picoprobe).
 
 1. We need to remove the official OpenOCD if present.
 
