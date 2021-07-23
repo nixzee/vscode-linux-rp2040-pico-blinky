@@ -1,0 +1,59 @@
+#syntax=docker/dockerfile:1.2
+#---------------------------------------------------------------------------------------------------
+# build
+# Descriptiuon: 
+#---------------------------------------------------------------------------------------------------
+
+# declare arguments with defaults
+# Meta args
+ARG TARGET_NAME="unspecified"
+ARG GIT_COMMIT="unspecified"
+ARG MAINTAINERS="https://github.com/nixzee"
+
+#---------------------------------------------------------------------------------------------------
+# Section: Build
+# Description: Copies the project in and runs the Makefile
+#---------------------------------------------------------------------------------------------------
+# FROM arm-none-eabi-gcc AS build
+FROM gcc-arm-none-eabi-10-2020-q4-major:latest AS build 
+LABEL stage=build
+
+# Declare args in scope
+ARG TARGET_NAME
+
+# Copy over the project
+COPY ./stm32f411 /workspace/stm32f411
+COPY ./common /workspace/common
+COPY ./${TARGET_NAME} /workspace/${TARGET_NAME} 
+RUN ls -al /workspace
+
+WORKDIR /workspace/${TARGET_NAME}
+# Setup a temp for artifacts we may want
+# cache mount does some weird stuff
+RUN mkdir tmp
+
+# Make the project
+# https://hub.docker.com/r/docker/dockerfile
+# The packages are stored outside of the docker layer, in a volume cache in the host.
+RUN --mount=id=make,type=cache,target=/workspace/${TARGET_NAME}build \
+    make clean all \
+    && ls -al build/ \
+    && cp build/*.elf tmp/ \
+    && cp build/*.hex tmp/ \
+    && cp build/*.bin tmp/
+
+#---------------------------------------------------------------------------------------------------
+# Section: Artifact
+# Description: Get the elf file
+#---------------------------------------------------------------------------------------------------
+FROM scratch AS artifact
+LABEL stage=artifact
+
+# Declare args in scope
+ARG TARGET_NAME
+ENV TARGET_NAME=${TARGET_NAME}
+
+# Copy
+COPY --from=build /workspace/${TARGET_NAME}/tmp/${TARGET_NAME}.elf .
+COPY --from=build /workspace/${TARGET_NAME}/tmp/${TARGET_NAME}.hex .
+COPY --from=build /workspace/${TARGET_NAME}/tmp/${TARGET_NAME}.bin .
