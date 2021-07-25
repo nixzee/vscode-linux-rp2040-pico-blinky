@@ -7,7 +7,9 @@
 # declare arguments with defaults
 # Docker args
 ARG DOCKER_BUILD_IMAGE="ubuntu:20.04"
-# ARM args
+# Debian/Ubuntu Env args
+ARG DEBIAN_FRONTEND=noninteractive
+# ARM GCC (Toolchain) args
 ARG ARM_NONE_EABI_BASE_URL="https://developer.arm.com/-/media/Files/downloads/gnu-rm"
 ARG ARM_NONE_EABI_PACKAGE_DATE="10-2020q4"
 ARG ARM_NONE_EABI_PACKAGE_VERSION="10-2020-q4-major"
@@ -29,6 +31,7 @@ FROM ${DOCKER_BUILD_IMAGE} AS arm-none-eabi-gcc
 LABEL stage=arm-none-eabi-gcc
 
 # Declare args in scope
+ARG DEBIAN_FRONTEND
 ARG ARM_NONE_EABI_BASE_URL
 ARG ARM_NONE_EABI_PACKAGE_DATE
 ARG ARM_NONE_EABI_PACKAGE_VERSION
@@ -40,6 +43,10 @@ ARG TOOLCHAIN_BASE_PATH
 ARG TOOLCHAIN_FULL_PATH
 ARG GIT_COMMIT
 ARG MAINTAINERS
+
+# Set the Debian interactive dialogue
+# Explination: https://www.cyberciti.biz/faq/explain-debian_frontend-apt-get-variable-for-ubuntu-debian/
+ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND}
 
 # Install dependecy packages
 RUN apt-get update && \

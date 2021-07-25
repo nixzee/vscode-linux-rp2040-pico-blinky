@@ -213,12 +213,15 @@ clean()
 #-----------------------------------------------------------------------------------------
 cleanAll()
 {
-    clean
     # Remove the artifacts and directory
     echo "Removing build dir"
     rm -rf "$BUILD_DIR"
     echo "Removing GCC image"
     docker rmi -f "$BASE_NAME"
+    # Clean
+    clean
+    # Remove dangling images
+    docker rmi -f $(docker images -f "dangling=true" -q)
 }
 
 # init

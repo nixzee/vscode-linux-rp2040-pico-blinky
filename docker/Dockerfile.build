@@ -22,8 +22,7 @@ LABEL stage=build
 ARG TARGET_NAME
 
 # Copy over the project
-COPY ./stm32f411 /workspace/stm32f411
-COPY ./common /workspace/common
+COPY ./pico-sdk /workspace/pico-sdk
 COPY ./${TARGET_NAME} /workspace/${TARGET_NAME} 
 RUN ls -al /workspace
 
@@ -36,6 +35,7 @@ RUN mkdir tmp
 # https://hub.docker.com/r/docker/dockerfile
 # The packages are stored outside of the docker layer, in a volume cache in the host.
 RUN --mount=id=make,type=cache,target=/workspace/${TARGET_NAME}build \
+    cmake .. \
     make clean all \
     && ls -al build/ \
     && cp build/*.elf tmp/ \

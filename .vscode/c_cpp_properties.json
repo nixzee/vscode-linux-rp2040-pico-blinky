@@ -4,8 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/pico-sdk/**",
-                "${workspaceFolder}/pico-sdk/src/common/pico_stdlib/include/pico/**"
+                "${workspaceFolder}/src/pico-sdk/**",
+                "${workspaceFolder}/src/pico-sdk/src/common/pico_stdlib/include/pico/**"
             ],
             "defines": [],
             "compilerPath": "/usr/local/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-g++",
