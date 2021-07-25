@@ -2,3 +2,5 @@ cicd.sh
 *.md
 build/
 docker/
+hardware/
+.vscode/
