@@ -1,20 +1,46 @@
 # <img src="https://raw.githubusercontent.com/nixzee/nixzee-branding/master/images/nixzee-logo-base.png" width="100"> Blinky Example for RP2040 Pico in Linux
 
-TODO
+This repo provides eveything you need to go from zero to debuging a RP2040 Pico using Ubuntu 20.04 ARM64 (on an RPI4) and VS Code Remote Plugin. Although this is for ARM64, it could easily be switch another distro.
 
-<!-- I feel like I need to explain why want a debbugger since I get this question a lot. -->
+## Motivation
 
-# Directory Structure
+A while I was starting a project that required multiple micro-controllers. I really wanted to use the PICO but I could not get any in stock. I had to settle with the STM32F411 (This was litterally the only chip I could get in stock at the time). This was my first solo embedded project and lets just say I learned a lot with a lot of pain along the way. At the end of the project, I wanted to ensure the next time would be better for me and others on my team. I don't want to go any further on this or this will turn into an even longer novel. However, the big take away is that Pico is cheap and abundant (now), has a solid community and well documented, powerful and easy to use. This is my main motivation for this repo.
 
-# OS (Ubuntu) Setup
+Once I was able to finally get the Pico, I discovered a lot of the documentation is heavily catered to Raspbian. Nothing wrong with that but not everyone use Raspbian. We, for instance, use Ubuntu 20.04 for our RPI deployments. I wanted to show to how to setup the Pico for anything but Raspbian.
 
-<!-- For the sake of this example, will be installing Ubuntu 20.04 onto a RPI 4. If you are using a different OS, skip this section. -->
+Another motivation for me is watching people struggle with Arduino (when doing anything complex) and not having a proper debugger. Yes, I know the latest Arduino IDE has debugging. However, thats only a half solution and you are now stuck in their ecosystem. By using OpenOCD we can perform a proper debug independent of the IDE. Additionally, VS Code is better IDE that can do most anything and provides a plugin called Cortex-Debug that will manage GDB and OpenOCD for us. Also, the Pico SDK is well documented and almost as easy to program is Arduino without hiding behind crippling abstraction.
 
-## Install Ubuntu Server 20.04 LTS 64bit on RPI 4.
+## Directory Structure
+
+The project directory structure is broken down as follows:
+
+* [.vscode](https://github.com/nixzee/vscode-linux-rp2040-pico-blinky/tree/main/.vscode) - Contains VS Code configurations.
+* build - This is where Cmake and Make artifacts live. This watched by the gitinore.
+* [docker](https://github.com/nixzee/vscode-linux-rp2040-pico-blinky/tree/main/docker) - Contains two Dockerfiles. One to be used to create a toolchain image and the other to build artifacts.
+* [hardware](https://github.com/nixzee/vscode-linux-rp2040-pico-blinky/tree/main/hardware) - This directory contains models and images for 3D printing case(s).
+* [src](https://github.com/nixzee/vscode-linux-rp2040-pico-blinky/tree/main/src) - The actual source code. This project has the main and the pico-sdk submodule.
+
+## Parts
+
+Below are list of parts that I used for to test this repo.
+
+* 2x [RP2040 Pico](https://tinyurl.com/26vwvxdt)
+* 1x [RPI 4](https://tinyurl.com/rbt6czxj)
+* 1x [Samsung Endurace Card](https://tinyurl.com/2he8cpcn)
+* 1x [Ice Cooler](https://tinyurl.com/x6fkxe9k)
+* 1x [RPI Power Supply](https://tinyurl.com/yjfx8nsh)
+* 1x [Micro USB Cable](https://tinyurl.com/4277rt3f)
+* 1x [Jumper Wire Kit](https://tinyurl.com/ubsyt854)
+
+---
+
+## OS (Ubuntu) Setup
+
+### Install Ubuntu Server 20.04 LTS 64bit on RPI 4
 
 This will walk through the process of installing an OS onto the RPI. We will be using Unbuntu 20.04 vs Raspbaian. The setup below was done from Windows 10 and SSH.
 
-1. Goto [Unbuntu for RPI](https://ubuntu.com/download/raspberry-pi) and download the "Ubuntu Server 20.04.1 LTS 64bit".
+1. Goto [Unbuntu for RPI](https://ubuntu.comt/download/raspberry-pi) and download the "Ubuntu Server 20.04.1 LTS 64bit".
 2. Once downloaded, get a 32-64GB uSD Card. I prefer the [Samsung Endurace Card](https://www.amazon.com/Samsung-Endurance-64GB-Micro-Adapter/dp/B07B9KTLJZ/ref=sr_1_3?crid=3H02VHGHS6QMC&dchild=1&keywords=endurance+sd+card+64gb&qid=1612207637&sprefix=endurance+sd+card%2Caps%2C169&sr=8-3). Here is a [dated white paper](https://www.jeffgeerling.com/blog/2019/raspberry-pi-microsd-card-performance-comparison-2019) comparing uSD cards. Honestly, do your own research.
 3. Extract the image from the tar using [7Zip](https://www.7-zip.org/) by right clicking on the downloaded ".tar" and clicking extract.
 4. Use [Win32DiskImager](https://sourceforge.net/projects/win32diskimager/) or Etcher to flash the uSD card. Insert the card, open the tool, click the folder icon, select the ".img" file, press OK and then press write. This should take 5 minutes.
@@ -58,9 +84,9 @@ This will walk through the process of installing an OS onto the RPI. We will be 
     sudo reboot
     ```
 
-## Setup Host and Hostname (optional)
+### Setup Host and Hostname (optional)
 
-A [hostname](https://en.wikipedia.org/wiki/Hostname) is like an alias for the device on the network. Below are instructions on how to set the hostname. 
+A [hostname](https://en.wikipedia.org/wiki/Hostname) is like an alias for the device on the network. Below are instructions on how to set the hostname.
 
 1. Open the hostname file and replace the old name with a new one.
 
@@ -80,7 +106,7 @@ A [hostname](https://en.wikipedia.org/wiki/Hostname) is like an alias for the de
     sudo reboot
     ```
 
-## Install ZSH (optional)
+### Install ZSH (optional)
 
 [ZSH](https://www.zsh.org/) and [oh-my-zsh](https://ohmyz.sh/) just to make life easier and make you look cool. You want to be cool.
 
@@ -136,11 +162,13 @@ A [hostname](https://en.wikipedia.org/wiki/Hostname) is like an alias for the de
     sudo apt install --yes powerline
     ```
 
-# Development Tools Setup
+---
+
+## Development Tools Setup
 
 This section will walk through all the tools you will need to develop and debug for the RP2040 Pico.
 
-## Git
+### Git
 
 We will need to setup our [Git](https://git-scm.com/) client. This example is in a [GitHub](https://github.com/) repo and use SSH instead of HTTPS as you should. This means we will need to setup a GitHub account (if dont already have one) and SSH keys.
 
@@ -166,7 +194,7 @@ We will need to setup our [Git](https://git-scm.com/) client. This example is in
 
 6. Now [test](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh/testing-your-ssh-connection).
 
-## CMake
+### CMake
 
 The [Pico SDK](https://github.com/raspberrypi/pico-sdk) leverages [CMake](https://cmake.org/) to build. CMake is both wonderful and terribly bloated but its the best thing so far. I highly recommend doing some reading on it if you are not familar. It can be bit overwhelming but go into with specific questions. Look at me...I am no CMake expert and I didn't manage to break everything.
 
@@ -176,7 +204,7 @@ The [Pico SDK](https://github.com/raspberrypi/pico-sdk) leverages [CMake](https:
     sudo apt install cmake
     ```
 
-## GNU Arm Embedded Toolchain
+### GNU Arm Embedded Toolchain
 
 We need to install the [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) in order to cross compile for the RP2040. We will be doing this because all new packages will not be release via Launchpad. [Here](https://launchpad.net/gcc-arm-embedded) is the article. [Here](https://askubuntu.com/questions/1243252/how-to-install-arm-none-eabi-gdb-on-ubuntu-20-04-lts-focal-fossa) is another explination. Also, I prefer choosing my toolchain. Put simply, we need to install the toolchain manaully. No biggie.
 
@@ -237,7 +265,7 @@ We need to install the [GNU Arm Embedded Toolchain](https://developer.arm.com/to
     warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
     ```
 
-## OpenOCD
+### OpenOCD
 
 This section will walk you through building and installing the OpenOCD for PicoProbe. At this time, OpenOCD does not officially support Rasperry Pi Pico so we need to build from their [branch](https://github.com/raspberrypi/openocd/tree/picoprobe). This is largely the same as what is in the [Getting Started](https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf#page=58).
 
@@ -303,7 +331,7 @@ This section will walk you through building and installing the OpenOCD for PicoP
     Info : Listening on port 3333 for gdb connections
     ```
 
-## Docker
+### Docker
 
 The following steps are to install **Docker**. [Docker](https://www.docker.com/) is used to create/use containers. This will be used later for CICD. Its also handy is you want to generate artifacts and dont want to setup a complete development enviroment.
 
@@ -350,7 +378,7 @@ The following steps are to install **Docker**. [Docker](https://www.docker.com/)
 
 6. Now after next session login or reboot you should be able to run docker commands as non-root (no sudo).
 
-## Pico Probe
+### Pico Probe
 
 In order to debug the Pico, we will need a SWD debugger. We will use another Pico flashed with Pico Probe to debug another Pico. More info can be found in [Getting Started](https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf#page=58).
 
@@ -381,11 +409,13 @@ In order to debug the Pico, we will need a SWD debugger. We will use another Pic
     sudo udevadm control --reload
     ```
 
-# Development Enviroment Setup
+---
+
+## Development Enviroment Setup
 
 This section will walk you through setting up the development enviroment in VS Code.
 
-## Cloning from GitHub
+### Cloning from GitHub
 
 Now we will pull the repo. Please keep in mind that this repo uses submodules, SSH, and LFS.
 
@@ -402,7 +432,7 @@ Now we will pull the repo. Please keep in mind that this repo uses submodules, S
     git submodule update --init --recursive
     ```
 
-## VS Code
+### VS Code
 
 For a development IDE, we are using [VS Code](https://code.visualstudio.com/) and some plugins including [VS Code Remote Development](https://code.visualstudio.com/docs/remote/remote-overview). Please keep in mind that these instructions work for build 1.58.2.
 
@@ -432,9 +462,9 @@ For a development IDE, we are using [VS Code](https://code.visualstudio.com/) an
     * markdownlint
     * Todo Tree
 
-7. Perform a window reload 'ctrl+shift+p' and type 'window reload' and hit enter. Log back in.
+7. Perform a window reload <kbd>Ctrl</kbd>+<kbd>shift</kbd>+<kbd>p</kbd> and type ```window reload``` and hit enter. Log back in.
 
-8. Now we need to select the CMake kit so that CMake knows which compiler to use. On the very bottom on the blue tool bar you should see something with a tool icon and says 'No Active kit'. Click it and click the 'Scan for Kits' at the top of the window. Wait for it to finish. Now select the 'No Active kit' again. Select 'GCC 10.2.1 arm-none-eabi' at the top of the window. This is the toolchain we installed earlier.
+8. Now we need to select the CMake kit so that CMake knows which compiler to use. On the very bottom on the blue tool bar you should see something with a tool icon and says ```No Active kit```. Click it and click the ```Scan for Kits``` at the top of the window. Wait for it to finish. Now select the ```No Active kit``` again. Select ```GCC 10.2.1 arm-none-eabi``` at the top of the window. This is the toolchain we installed earlier.
 
 9. The build artifacts from CMake need a place to live. We will put them into a build directory. Let's create one. Note that the build directory is in the git ignore file. This means any changes in the folder will not be tracked by git. This is a good thing since we dont want artifacts and binaries being pushed to git. To create a build directory, navigate to repo directory and create it or just create in VS Code.
 
@@ -443,7 +473,7 @@ For a development IDE, we are using [VS Code](https://code.visualstudio.com/) an
     mkdir build
     ```
 
-10. Let's quickly test CMake. Perform 'ctrl+shift+p' and type 'Cmake: Configure and hit enter. You should see something like this in the OUTPUT:
+10. Let's quickly test CMake. Perform <kbd>Ctrl</kbd>+<kbd>shift</kbd>+<kbd>p</kbd> and type ```Cmake: Configure``` and hit enter. You should see something like this in the OUTPUT:
 
     ```console
     [main] Configuring folder: vscode-linux-rp2040-pico-blinky 
@@ -461,10 +491,42 @@ For a development IDE, we are using [VS Code](https://code.visualstudio.com/) an
     [cmake] -- Build files have been written to: /home/ubuntu/vscode-linux-rp2040-pico-blinky/build
     ```
 
-The next time you connect, click the green box again and select your device. You will need to open the project folder each time since the connection will take you to home.
+The next time you connect, click the green box again and select your device. You will need to open the project folder each time since the connection will take you to home. You should see the 
 
-# Building and Debug
+---
 
+## Building and Debug
 
+Finally, the good stuff.
 
-# CICD and Docker
+### Building
+
+In order to debug, we will need to build and generate the ```.elf``` file. There are a few ways to do this.
+
+#### Option A - CMake Plugin
+
+The first way to build the elf file is to use the CMake plugin. Assuming you have VS Code open to the repo, click the CMake icon in the left toolbar. At the top of the ```CMake: Project Outline``` click the icon that looks like an arrow point into a cup of dots. This will build thwe whole project. You should the see the OUPUT spit build progress. If you get a message saying something like CMake can't find its cache, re-configure CMake. Perform <kbd>Ctrl</kbd>+<kbd>shift</kbd>+<kbd>p</kbd> and type ```Cmake: Configure``` and hit enter.
+
+#### Option B - Run in Debug
+
+This is the easiest thing to do and just skip ahead to the next section.
+
+#### Option C - Terminal
+
+1. In the terminal navigate repo and enter the build directory.
+
+    ```shell
+    cd ~/vscode-linux-rp2040-pico-blinky/build
+    ```
+
+TODO
+
+### Debug
+
+We can now finally debug.
+
+1. Wire the two 
+
+---
+
+## CICD and Docker
