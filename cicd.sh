@@ -12,10 +12,7 @@
 # Description: Global variables
 #-----------------------------------------------------------------------------------------
 REGISTRY=""
-VERSION=""
-DEFAULT_VERSION=""
-BASE_NAME=""
-TARGET_NAME=""
+TOOLCHAIN=""
 SHA=""
 SHORT_SHA=""
 BUILD_DIR="_build"
@@ -23,10 +20,8 @@ BUILD_DIR="_build"
 init()
 {
 echo "Initializing..."
-# get the base name
-BASE_NAME="gcc-arm-none-eabi-"$(grep "ARG ARM_NONE_EABI_PACKAGE_VERSION=" docker/Dockerfile.gcc | cut -d '"' -f 2)
-# get the project name
-TARGET_NAME=$(grep "TARGET =" Makefile | cut -d ' ' -f 3)
+# get the toolchain
+TOOLCHAIN="gcc-arm-none-eabi-"$(grep "ARG ARM_NONE_EABI_PACKAGE_VERSION=" docker/Dockerfile.toolchain | cut -d '"' -f 2)
 # Check if local or action...
 # This is janky but it does the job
 ACTION=true
@@ -39,21 +34,15 @@ echo ""
 # set based on build enviroment
 if [ $ACTION = true ]
 then # Action
-    VERSION=""
-    DEFAULT_VERSION=$(git rev-parse --short=4 ${{ GITHUB_SHA }})
     SHA=${GITHUB_SHA}
     SHORT_SHA=$(git rev-parse --short=4 ${{ GITHUB_SHA }})
 else #Local
-    VERSION=""
-    DEFAULT_VERSION=$(git log -1 --pretty=format:%h)
     SHA=$(git log -1 --format=%H)
     SHORT_SHA=$(git log -1 --pretty=format:%h)
 fi
 # log
 echo "REGISTRY: $REGISTRY"
-echo "VERSION: $VERSION"
-echo "DEFAULT_VERSION: $DEFAULT_VERSION"
-echo "BASE_NAME: $BASE_NAME"
+echo "TOOLCHAIN: $TOOLCHAIN"
 echo "SHA: $SHA"
 echo "SHORT_SHA: $SHORT_SHA"
 echo "Initializing Complete"
@@ -105,86 +94,56 @@ usage()
 {
     echo "##############################################################################" 
     echo "Usage" 
-    echo "-g for GCC"
+    echo "-t for TOOLCHAIN"
     echo "-b for Build"
-    echo "-X for Build All"
     echo "-c for Clean"
     echo "-s for Clean All"
     echo "##############################################################################" 
 }
 
 #-----------------------------------------------------------------------------------------
-# GCC
-# Description: This setups the GCC base
+# Toolchain
+# Description: This setups the toolchain base
 #-----------------------------------------------------------------------------------------
-gcc()
+toolchain()
 {
-    echo "Creating GCC Builder..."
+    echo "Creating Toolchain Builder..."
     # set the tag to the defualt version if no version exists
     TAG=$VERSION
-    if [ -z "$VERSION" ]; #Check for env
+    if [ -z "$VERSION" ]; # Check for env
     then 
-        # TAG=$DEFAULT_VERSION
         # For now we will use latest
-        TAG="latest"
+        TAG="1.0.0"
     fi
-    echo "Prepped for: $BASE_NAME:$TAG"
+    echo "Prepped for: $TOOLCHAIN:$TAG"
     # build
     echo "Creating..."
-    docker buildx build . -f ./docker/Dockerfile.gcc -t $BASE_NAME:$TAG \
+    docker buildx build . -f ./docker/Dockerfile.toolchain -t test/$TOOLCHAIN:$TAG \
+        --progress=plain \
         --build-arg $GIT_COMMIT="$SHA" \
-        --target arm-none-eabi-gcc
+        --target toolchain
     status_check $?
-    echo "GCC Bulder Complete"
+    echo "GCC Toolchain Complete"
     echo ""
 }
 
 #-----------------------------------------------------------------------------------------
 # Build
-# Description: Builds a particular node and places the artifacts in the "build dir"
+# Description: Builds the project and places the artifacts in the "build dir"
 #-----------------------------------------------------------------------------------------
 build()
 {
-    echo "Building Node $1..."
-    
+    # Make the build dir
     makeBuildDIR
-    # check if the file exists
-    validateName $1
-    NAME=$1
 
-    docker buildx build . -f ./docker/Dockerfile.build --target artifact \
-    --progress=plain \
-    --build-arg TARGET_NAME="$NAME" \
-    --output ./"$BUILD_DIR"
+    # docker buildx build . -f ./docker/Dockerfile.build --target artifact \
+    # --progress=plain \
+    # --output ./"$BUILD_DIR"
+
+    docker build . -f ./docker/Dockerfile.build --target artifact
 
     status_check $?
     echo "Building Complete..check $BUILD_DIR for artifacts"
-    echo ""
-}
-
-# -----------------------------------------------------------------------------------------
-# BuildAll
-# Description: 
-# -----------------------------------------------------------------------------------------
-buildAll() 
-{
-    echo "Building All..."
-    # Find all services in cmd with a main.go
-    NODES=""
-    for FOUND in $(find . -name main.cpp -printf '%h\n' | cut -d '/' -f 2)
-    do
-        # Enssure has a makefile
-        if [ $FOUND/makefile ]; then
-            NODES="$NODES $FOUND"
-        fi
-    done
-    echo "Found the following valid Nodes:$NODES"
-    # Build the valid services
-    for NODE in $NODES
-    do
-        build $NODE
-    done
-    echo "Building All Complete"
     echo ""
 }
 
@@ -197,12 +156,12 @@ clean()
     # prune images by stage label (only care about our mess)
     # Do note that artifacts should not produce images
     echo "Docker image prune"
-    docker image prune --filter label=stage=unit-arm-none-eabi-gcc --force
+    docker image prune --filter label=stage=toolchain --force
     docker image prune --filter label=stage=build --force
     docker image prune --filter label=stage=artifact --force
     # https://github.com/moby/buildkit/issues/1358
     echo "Docker builder prune"
-    docker builder prune --filter label=stage=arm-none-eabi-gcc --force 
+    docker builder prune --filter label=stage=toolchain --force 
     docker builder prune --filter label=stage=build --force
     docker builder prune --filter label=stage=artifact --force
 }
@@ -216,8 +175,8 @@ cleanAll()
     # Remove the artifacts and directory
     echo "Removing build dir"
     rm -rf "$BUILD_DIR"
-    echo "Removing GCC image"
-    docker rmi -f "$BASE_NAME"
+    echo "Removing toolchain image"
+    docker rmi -f "$TOOLCHAIN:1.0.0"
     # Clean
     clean
     # Remove dangling images
@@ -228,12 +187,11 @@ cleanAll()
 init
 
 # Parse arguements and run
-while getopts ":hgb:xcs" options; do
+while getopts ":htbcs" options; do
     case $options in
         h ) usage ;;           # usage (help)
-        g ) gcc ;;             # gcc
-        b ) build  $OPTARG ;;  # build
-        x ) buildAll ;;        # build all
+        t ) toolchain ;;       # toolchain
+        b ) build ;;          # build
         c ) clean ;;           # clean
         s ) cleanAll ;;        # superClean
         * ) usage ;;           # default (help)

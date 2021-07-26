@@ -15,18 +15,16 @@ ARG MAINTAINERS="https://github.com/nixzee"
 # Description: Copies the project in and runs the Makefile
 #---------------------------------------------------------------------------------------------------
 # FROM arm-none-eabi-gcc AS build
-FROM gcc-arm-none-eabi-10-2020-q4-major:latest AS build 
-LABEL stage=build
-
-# Declare args in scope
-ARG TARGET_NAME
+# TODO: Should really pass in the name of the toolchain.
+# FROM gcc-arm-none-eabi-10-2020-q4-major:latest AS build 
+FROM test/gcc-arm-none-eabi-10-2020-q4-major:1.0.0 AS build
+LABEL stage=
 
 # Copy over the project
-COPY ./pico-sdk /workspace/pico-sdk
-COPY ./${TARGET_NAME} /workspace/${TARGET_NAME} 
-RUN ls -al /workspace
+COPY ./src /workspace/src
+RUN ls -al /workspace/src
 
-WORKDIR /workspace/${TARGET_NAME}
+WORKDIR /workspace/src
 # Setup a temp for artifacts we may want
 # cache mount does some weird stuff
 RUN mkdir tmp
@@ -34,7 +32,8 @@ RUN mkdir tmp
 # Make the project
 # https://hub.docker.com/r/docker/dockerfile
 # The packages are stored outside of the docker layer, in a volume cache in the host.
-RUN --mount=id=make,type=cache,target=/workspace/${TARGET_NAME}build \
+# TODO: Fix this...was copied from my STM32 project
+RUN --mount=id=make,type=cache,target=/workspace/src/build \
     cmake .. \
     make clean all \
     && ls -al build/ \
