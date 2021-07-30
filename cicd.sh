@@ -11,12 +11,18 @@
 # Globals and init
 # Description: Global variables
 #-----------------------------------------------------------------------------------------
+# Supported Container Builders
+readonly CONTAINER_BUILDER_DOCKER="docker"
+readonly CONTAINER_BUILDER_BUILDKIT="buildkit"
+# Globals
 REGISTRY=""
+CONTAINER_BUILDER=$CONTAINER_BUILDER_BUILDKIT
 TOOLCHAIN="gcc-arm-none-eabi"
 TOOLCHAIN_VERSION=""
 SHA=""
 SHORT_SHA=""
-BUILD_DIR="_build"
+BUILD_DIR="build"
+
 
 init()
 {
@@ -43,6 +49,7 @@ else #Local
 fi
 # log
 echo "REGISTRY: $REGISTRY"
+echo "CONTAINER_BUILDER: $CONTAINER_BUILDER"
 echo "TOOLCHAIN: $TOOLCHAIN"
 echo "TOOLCHAIN_VERSION: $TOOLCHAIN_VERSION" 
 echo "SHA: $SHA"
@@ -66,27 +73,26 @@ status_check()
 }
 
 #-----------------------------------------------------------------------------------------
-# validateName
-# Description: Is used by functions like build to verify the name being passed
-#-----------------------------------------------------------------------------------------
-validateName()
-{
-    if [ ! -f $1/src/main.cpp ]; then
-        echo "The node main does not exist"
-        status_check 2
-    fi
-}
-
-#-----------------------------------------------------------------------------------------
 # makeBuildDIR
 # Description: Is used by functions to make the build dir
 #-----------------------------------------------------------------------------------------
 makeBuildDIR()
 {
     # create the build dir with perms
-    mkdir -m777 $BUILD_DIR
+    echo "Creating build directory"
+    mkdir -p -m777 $BUILD_DIR
 }
 
+#-----------------------------------------------------------------------------------------
+# removeBuildDIR
+# Description: Is used by functions to remove the build dir
+#-----------------------------------------------------------------------------------------
+removeBuildDIR()
+{
+    # Remove the build directory
+    echo "Removing build directory"
+    rm -rf "$BUILD_DIR"
+}
 
 #-----------------------------------------------------------------------------------------
 # Usage
@@ -98,6 +104,7 @@ usage()
     echo "Usage" 
     echo "-t for TOOLCHAIN"
     echo "-b for Build"
+    echo "-a for Build from Container"
     echo "-c for Clean"
     echo "-s for Clean All"
     echo "##############################################################################" 
@@ -109,15 +116,28 @@ usage()
 #-----------------------------------------------------------------------------------------
 toolchain()
 {
-    echo "Creating Toolchain Builder..."
+    echo "Creating Toolchain Image..."
 
     echo "Prepped for: $TOOLCHAIN:$TOOLCHAIN_VERSION"
     # build
-    echo "Creating..."
-    docker buildx build . -f ./docker/Dockerfile.toolchain -t $TOOLCHAIN:$TOOLCHAIN_VERSION \
-        --progress=plain \
-        --build-arg $GIT_COMMIT="$SHA" \
-        --target toolchain
+    case $CONTAINER_BUILDER in
+        "$CONTAINER_BUILDER_BUILDKIT" ) # For Buildkit
+            echo "Using Buildkit"
+            docker buildx build . -f ./docker/Dockerfile.toolchain -t $TOOLCHAIN:$TOOLCHAIN_VERSION \
+                --progress=plain \
+                --build-arg $GIT_COMMIT="$SHA" \
+                --target toolchain
+            ;;
+        "$CONTAINER_BUILDER_DOCKER" ) # For Docker
+            echo "Using Docker"
+            docker build . -f ./docker/Dockerfile.toolchain -t $TOOLCHAIN:$TOOLCHAIN_VERSION \
+                --build-arg GIT_COMMIT="$SHA"
+            ;;
+        * )
+            echo "No Container builder is set or not supported"
+            status_check 2 
+            ;;
+    esac
     status_check $?
     echo "GCC Toolchain Complete"
     echo ""
@@ -125,21 +145,36 @@ toolchain()
 
 #-----------------------------------------------------------------------------------------
 # Build
-# Description: Builds the project and places the artifacts in the "build dir"
+# Description: 
 #-----------------------------------------------------------------------------------------
 build()
 {
+    # Remove build dir
+    removeBuildDIR
     # Make the build dir
     makeBuildDIR
 
-    # docker buildx build . -f ./docker/Dockerfile.build --target artifact \
-    # --progress=plain \
-    # --output ./"$BUILD_DIR"
-
-    docker buildx build . -f ./docker/Dockerfile.build --target artifact
-
+    echo "Configuring and Building with CMake"
+    # build
+    cd build/ && \
+        cmake .. -G "Unix Makefiles" && \
+        cmake --build . --config Debug --target all -j 4
     status_check $?
-    echo "Building Complete..check $BUILD_DIR for artifacts"
+    echo "Build Complete"
+    echo ""
+}
+
+#-----------------------------------------------------------------------------------------
+# buildFromDocker
+# Description: 
+#-----------------------------------------------------------------------------------------
+buildFromDocker()
+{
+
+    echo "Build from"
+    # build
+    docker run --rm -it -v $(pwd):/workspace -exec $TOOLCHAIN:$TOOLCHAIN_VERSION bash -c "cd workspace/ && ./cicd.sh -b" 
+    echo "Build Complete"
     echo ""
 }
 
@@ -168,28 +203,36 @@ clean()
 #-----------------------------------------------------------------------------------------
 cleanAll()
 {
-    # Remove the artifacts and directory
-    echo "Removing build dir"
-    rm -rf "$BUILD_DIR"
-    echo "Removing toolchain image"
-    docker rmi -f $(docker images | grep $TOOLCHAIN)
+    # Remove build dir
+    removeBuildDIR
+    # Remove toolchain image
+    echo "Removing toolchain image if found"
+    if [ $(docker images | grep $TOOLCHAIN | awk '{print $3}') ]; 
+    then
+        docker rmi -f $(docker images | grep $TOOLCHAIN | awk '{print $3}')
+    fi
     # Clean
     clean
     # Remove dangling images
-    docker rmi -f $(docker images -f "dangling=true" -q)
+    echo "Removing dangling image(s) if found"
+    if [ $(docker images -f "dangling=true" -q) ]; 
+    then
+        docker rmi -f $(docker images -f "dangling=true" -q)
+    fi
 }
 
 # init
 init
 
 # Parse arguements and run
-while getopts ":htbcs" options; do
+while getopts ":htbacs" options; do
     case $options in
-        h ) usage ;;           # usage (help)
-        t ) toolchain ;;       # toolchain
-        b ) build ;;          # build
-        c ) clean ;;           # clean
-        s ) cleanAll ;;        # superClean
-        * ) usage ;;           # default (help)
+        h ) usage ;;             # usage (help)
+        t ) toolchain ;;         # toolchain
+        b ) build ;;             # build
+        a ) buildFromDocker ;;   # buildFromDocker
+        c ) clean ;;             # clean
+        s ) cleanAll ;;          # superClean
+        * ) usage ;;             # default (help)
     esac
 done
