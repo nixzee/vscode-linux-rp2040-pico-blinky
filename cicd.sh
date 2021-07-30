@@ -12,7 +12,8 @@
 # Description: Global variables
 #-----------------------------------------------------------------------------------------
 REGISTRY=""
-TOOLCHAIN=""
+TOOLCHAIN="gcc-arm-none-eabi"
+TOOLCHAIN_VERSION=""
 SHA=""
 SHORT_SHA=""
 BUILD_DIR="_build"
@@ -21,7 +22,7 @@ init()
 {
 echo "Initializing..."
 # get the toolchain
-TOOLCHAIN="gcc-arm-none-eabi-"$(grep "ARG ARM_NONE_EABI_PACKAGE_VERSION=" docker/Dockerfile.toolchain | cut -d '"' -f 2)
+TOOLCHAIN_VERSION=$(grep "ARG ARM_NONE_EABI_PACKAGE_VERSION=" docker/Dockerfile.toolchain | cut -d '"' -f 2)
 # Check if local or action...
 # This is janky but it does the job
 ACTION=true
@@ -43,6 +44,7 @@ fi
 # log
 echo "REGISTRY: $REGISTRY"
 echo "TOOLCHAIN: $TOOLCHAIN"
+echo "TOOLCHAIN_VERSION: $TOOLCHAIN_VERSION" 
 echo "SHA: $SHA"
 echo "SHORT_SHA: $SHORT_SHA"
 echo "Initializing Complete"
@@ -108,17 +110,11 @@ usage()
 toolchain()
 {
     echo "Creating Toolchain Builder..."
-    # set the tag to the defualt version if no version exists
-    TAG=$VERSION
-    if [ -z "$VERSION" ]; # Check for env
-    then 
-        # For now we will use latest
-        TAG="1.0.0"
-    fi
-    echo "Prepped for: $TOOLCHAIN:$TAG"
+
+    echo "Prepped for: $TOOLCHAIN:$TOOLCHAIN_VERSION"
     # build
     echo "Creating..."
-    docker buildx build . -f ./docker/Dockerfile.toolchain -t test/$TOOLCHAIN:$TAG \
+    docker buildx build . -f ./docker/Dockerfile.toolchain -t $TOOLCHAIN:$TOOLCHAIN_VERSION \
         --progress=plain \
         --build-arg $GIT_COMMIT="$SHA" \
         --target toolchain
@@ -140,7 +136,7 @@ build()
     # --progress=plain \
     # --output ./"$BUILD_DIR"
 
-    docker build . -f ./docker/Dockerfile.build --target artifact
+    docker buildx build . -f ./docker/Dockerfile.build --target artifact
 
     status_check $?
     echo "Building Complete..check $BUILD_DIR for artifacts"
@@ -176,7 +172,7 @@ cleanAll()
     echo "Removing build dir"
     rm -rf "$BUILD_DIR"
     echo "Removing toolchain image"
-    docker rmi -f "$TOOLCHAIN:1.0.0"
+    docker rmi -f $(docker images | grep $TOOLCHAIN)
     # Clean
     clean
     # Remove dangling images

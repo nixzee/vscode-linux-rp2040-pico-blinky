@@ -17,8 +17,8 @@ ARG MAINTAINERS="https://github.com/nixzee"
 # FROM arm-none-eabi-gcc AS build
 # TODO: Should really pass in the name of the toolchain.
 # FROM gcc-arm-none-eabi-10-2020-q4-major:latest AS build 
-FROM test/gcc-arm-none-eabi-10-2020-q4-major:1.0.0 AS build
-LABEL stage=
+FROM gcc-arm-none-eabi:10-2020-q4-major AS build
+LABEL stage=build
 
 # Copy over the project
 COPY ./src /workspace/src

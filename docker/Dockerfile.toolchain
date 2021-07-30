@@ -75,4 +75,5 @@ WORKDIR /workspace
 LABEL commit=${GIT_COMMIT}
 LABEL maintainer=${MAINTAINERS}
 
+# TODO: Multi-stage the gcc toolchain to remove the tar layer and copy only what is needed.
 # TODO: Should look into slimming down image considerably and maybe switch from Ubuntu.
