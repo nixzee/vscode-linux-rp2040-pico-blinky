@@ -2,6 +2,7 @@ cicd.sh
 *.md
 build/
 _build/
+src/
 docker/
 hardware/
 .vscode/

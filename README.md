@@ -10,6 +10,15 @@ Once I was able to finally get the Pico, I discovered a lot of the documentation
 
 Another motivation for me is watching people struggle with Arduino (when doing anything complex) and not having a proper debugger. Yes, I know the latest Arduino IDE has debugging. However, thats only a half solution and you are now stuck in their ecosystem. By using OpenOCD we can perform a proper debug independent of the IDE. Additionally, VS Code is better IDE that can do most anything and provides a plugin called Cortex-Debug that will manage GDB and OpenOCD for us. Also, the Pico SDK is well documented and almost as easy to program is Arduino without hiding behind crippling abstraction.
 
+## Future Goals
+
+There are some additional goals I want to do in the future to extened this project. I will mark these off as they get completed.
+
+* Add [ccache](https://ccache.dev/) support.
+* Setup a [GitHub Action](https://github.com/features/actions) and [GitHub Packages](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages). This is something I just never seem to get around to for some reason but is hugely important.
+* Develop a debugging board for the Pico using [KiCAD](https://www.kicad.org/). My idea is just mate the pico foot print to the board an use simple through-hole components to make it an easy build. The motivation is a cheap and easy way to simplify the wiring for Pico Probe.
+* Create an example around [FreeRTOS](https://www.freertos.org/index.html). Most of my embedded projects use FreeRTOS. If you have never heard of it or used, read the documenetaion and use it. Its a game changer for some projects. I believe there is already a branch to support multi-core M0+.
+
 ## Directory Structure
 
 The project directory structure is broken down as follows:
@@ -196,7 +205,7 @@ We will need to setup our [Git](https://git-scm.com/) client. This example is in
 
 ### CMake
 
-The [Pico SDK](https://github.com/raspberrypi/pico-sdk) leverages [CMake](https://cmake.org/) to build. CMake is both wonderful and terribly bloated but its the best thing so far. I highly recommend doing some reading on it if you are not familar. It can be bit overwhelming but go into with specific questions. Look at me...I am no CMake expert and I didn't manage to break everything.
+The [Pico SDK](https://github.com/raspberrypi/pico-sdk) leverages [CMake](https://cmake.org/) to build. I highly recommend doing some reading on it if you are not familar. It can be bit overwhelming but go into with specific questions. Look at me...I am no CMake expert and I didn't manage to break everything.
 
 1. We need to install CMake.
 
@@ -497,36 +506,88 @@ The next time you connect, click the green box again and select your device. You
 
 ## Building and Debug
 
-Finally, the good stuff.
-
-### Building
-
-In order to debug, we will need to build and generate the ```.elf``` file. There are a few ways to do this.
-
-#### Option A - CMake Plugin
-
-The first way to build the elf file is to use the CMake plugin. Assuming you have VS Code open to the repo, click the CMake icon in the left toolbar. At the top of the ```CMake: Project Outline``` click the icon that looks like an arrow point into a cup of dots. This will build thwe whole project. You should the see the OUPUT spit build progress. If you get a message saying something like CMake can't find its cache, re-configure CMake. Perform <kbd>Ctrl</kbd>+<kbd>shift</kbd>+<kbd>p</kbd> and type ```Cmake: Configure``` and hit enter.
-
-#### Option B - Run in Debug
-
-This is the easiest thing to do and just skip ahead to the next section.
-
-#### Option C - Terminal
-
-1. In the terminal navigate repo and enter the build directory.
-
-    ```shell
-    cd ~/vscode-linux-rp2040-pico-blinky/build
-    ```
-
-TODO
-
-### Debug
-
-We can now finally debug.
-
-1. Wire the two 
-
----
+ddd
 
 ## CICD and Docker
+
+This section will discuss the cicd script and how Docker is being used to build the project.
+
+### CICD "Lite"
+
+One of the future goals of this project is setup a GitHub action to continously build the project. I would not go as far as to call this actual [cicd](https://www.atlassian.com/continuous-delivery/principles/continuous-integration-vs-delivery-vs-deployment).To assist in our cicd "lite", there is a provided shell script with flags. Let's break these down.
+
+* -a for About - Logs meta info to stdout (the terminal).
+* -t for Toolchain - Builds the toolchain image using a supported container builder.
+* -b for Build from local - Will build the artifacts at the OS level.
+* -d for Build from Container - Will use the toolchain image to build the artifacts.
+* -c for Clean - Cleans the container builder.
+* -s for Clean All - Wipes everything including build dir and images.
+
+An example use case for About:
+
+```shell
+./cicsh.sh -a
+```
+
+If you are having permission issues, set the execution permission.
+
+```shell
+chmod +x cicd.sh
+```
+
+### Build from Container
+
+In addtion to our script, there is a [Dockerfile](https://docs.docker.com/engine/reference/builder/) used to build a toolchain image. This image has everything needed to compile the code for the Pico. This handy if you just want a UF2 artifact and dont want to setup the development tools and/or enviroment. Another thing I like about using containers, is that we can version lock the build tools. More reading about Docker, Contaierd, etc:
+
+* [What is Docker?](https://opensource.com/resources/what-docker)
+* [conatiner vs image](https://phoenixnap.com/kb/docker-image-vs-container)
+* [containerd](https://containerd.io/)
+
+This my first time developing an image that is used to build and is NOT apart of another stage. I spent the past few years developing micro-services with Docker and [Golang](https://golang.org/) for Edge IoT but this is a little different. Please advise if you have recommendations.
+
+Follow the steps below to be able to compile the project from a container.
+
+1. Run the cicd shell script to build the toolchain images. You will need internet connection and this will take a few minutes.
+
+    ```shell
+    ./cicd.sh -at
+    ```
+
+    You should see something like this when completed:
+
+    ```console
+    ...
+    #13 exporting to image
+    #13 sha256:e8c613e07b0b7ff33893b694f7759a10d42e180f2b4dc349fb57dc6b71dcab00
+    #13 exporting layers done
+    #13 writing image sha256:2f390daacc9d19afeb491e6ea5d743bd4d2d790f13fa8027f25c1884295eded1
+    #13 writing image sha256:2f390daacc9d19afeb491e6ea5d743bd4d2d790f13fa8027f25c1884295eded1 0.1s done
+    #13 naming to docker.io/library/gcc-arm-none-eabi:10-2020-q4-major done
+    #13 DONE 0.1s
+    GCC Toolchain Complete
+    ```
+
+2. Now compile the code. Please keep in mind that the build directory will be owned by root. I assume this due to Docker running as root by default. I will look into this at some point...
+
+    ```shell
+    ./cicd.sh -d
+    ```
+
+    You should see something like this when completed:
+
+    ```console
+    ...
+    [ 86%] Building ASM object CMakeFiles/blinky.dir/src/pico-sdk/src/rp2_common/pico_float/float_v1_rom_shim.S.obj
+    [ 88%] Building C object CMakeFiles/blinky.dir/src/pico-sdk/src/rp2_common/pico_malloc/pico_malloc.c.obj
+    [ 89%] Building ASM object CMakeFiles/blinky.dir/src/pico-sdk/src/rp2_common/pico_mem_ops/mem_ops_aeabi.S.obj
+    [ 91%] Building CXX object CMakeFiles/blinky.dir/src/pico-sdk/src/rp2_common/pico_standard_link/new_delete.cpp.obj
+    [ 93%] Building C object CMakeFiles/blinky.dir/src/pico-sdk/src/rp2_common/pico_standard_link/binary_info.c.obj
+    [ 94%] Building ASM object CMakeFiles/blinky.dir/src/pico-sdk/src/rp2_common/pico_standard_link/crt0.S.obj
+    [ 96%] Building C object CMakeFiles/blinky.dir/src/pico-sdk/src/rp2_common/pico_stdio/stdio.c.obj
+    [ 98%] Building C object CMakeFiles/blinky.dir/src/pico-sdk/src/rp2_common/pico_stdio_uart/stdio_uart.c.obj
+    [100%] Linking CXX executable blinky.elf
+    [100%] Built target blinky
+    Build Complete
+    ```
+
+3. You should now see the build directory populated.
