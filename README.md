@@ -500,13 +500,63 @@ For a development IDE, we are using [VS Code](https://code.visualstudio.com/) an
     [cmake] -- Build files have been written to: /home/ubuntu/vscode-linux-rp2040-pico-blinky/build
     ```
 
-The next time you connect, click the green box again and select your device. You will need to open the project folder each time since the connection will take you to home. You should see the 
+The next time you connect, click the green box again and select your device. You will need to open the project folder each time since the connection will take you to home.
 
 ---
 
 ## Building and Debug
 
-ddd
+You are finally ready to build (You technically already did) and debug. This is the butter of the project since now you can get writing code, deploying it, and stepping through it. 
+
+1. Grab your two Picos. One should be your Picoprobe, and the other is the target. You will need to wire power, UART, and SWD from the Picoprobe to your target. You can find a diagram [here](https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf#page=58).
+
+2. Plug the micro USB cable into the picoprobe and into the development computer.
+
+    <img src="./hardware/images/picoprobe.jpg" width=90%>
+
+3. Use VScode to connect via SSH and open the project. Click on Run > Start Debugging. You should see the project build, OpenOCD connect to GDB, and then main.cpp paused at ```int main()``` if there are no other break points.
+
+    You should see something like this in Output:
+
+    ```console
+    [proc] Executing command: /usr/bin/cmake --build /home/ubuntu/vscode-linux-rp2040-pico-blinky/build --config Debug --target     blinky -j 6 --
+    [build] [  5%] Performing build step for 'ELF2UF2Build'
+    [build] [  5%] Built target bs2_default
+    [build] [  8%] Built target bs2_default_padded_checksummed_asm
+    [build] [100%] Built target elf2uf2
+    [build] [ 10%] No install step for 'ELF2UF2Build'
+    [build] [ 11%] Completed 'ELF2UF2Build'
+    [build] [ 20%] Built target ELF2UF2Build
+    [build] [100%] Built target blinky
+    [build] Build finished with exit code 0
+    ```
+
+    Followed by this in Debug Console:
+
+    ```console
+    Please check OUTPUT tab (Adapter Output) for output from openocd
+    Launching server: "openocd" "-c" "gdb_port 50000" "-c" "tcl_port 50001" "-c" "telnet_port 50002" "-s" "/home/ubuntu/    vscode-linux-rp2040-pico-blinky" "-f" "interface/picoprobe.cfg" "-f" "target/rp2040.cfg"
+    Launching GDB: "arm-none-eabi-gdb" "-q" "--interpreter=mi2"
+    Reading symbols from /home/ubuntu/vscode-linux-rp2040-pico-blinky/build/blinky.elf...
+    warning: multi-threaded target stopped without sending a thread-id, using first non-exited thread
+    main () at /home/ubuntu/vscode-linux-rp2040-pico-blinky/src/main.cpp:33	int main() {
+    Not implemented stop reason (assuming exception): undefined
+    target halted due to debug-request, current mode: Thread 
+    xPSR: 0xf1000000 pc: 0x000000ee msp: 0x20041f00
+    target halted due to debug-request, current mode: Thread 
+    xPSR: 0xf1000000 pc: 0x000000ee msp: 0x20041f00
+    target halted due to debug-request, current mode: Thread 
+    xPSR: 0xf1000000 pc: 0x000000ee msp: 0x20041f00
+    target halted due to debug-request, current mode: Thread 
+    xPSR: 0xf1000000 pc: 0x000000ee msp: 0x20041f00
+    Note: automatically using hardware breakpoints for read-only addresses.
+    target halted due to debug-request, current mode: Thread 
+    xPSR: 0x01000000 pc: 0x0000012a msp: 0x20041f00
+    ```
+
+4. At this point you are now debugging. You can add break points and single step through the source code. Additionally, you should be able to see your variables, create watches, see the callstack, and look at the Cortex peripherals and registers.
+
+    <img src="./hardware/images/vscode-debug.png">
 
 ## CICD and Docker
 
