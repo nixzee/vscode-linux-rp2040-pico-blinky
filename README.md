@@ -18,6 +18,7 @@ There are some additional goals I want to do in the future to extened this proje
 * Setup a [GitHub Action](https://github.com/features/actions) and [GitHub Packages](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages). This is something I just never seem to get around to for some reason but is hugely important.
 * Develop a debugging board for the Pico using [KiCAD](https://www.kicad.org/). My idea is just mate the pico foot print to the board an use simple through-hole components to make it an easy build. The motivation is a cheap and easy way to simplify the wiring for Pico Probe.
 * Create an example around [FreeRTOS](https://www.freertos.org/index.html). Most of my embedded projects use FreeRTOS. If you have never heard of it or used, read the documenetaion and use it. Its a game changer for some projects. I believe there is already a branch to support multi-core M0+.
+* Attempt to setup a build and debug image. This would include OpenOCD and allow the user to debug from a container vs natively.
 
 ## Directory Structure
 
