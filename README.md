@@ -4,7 +4,7 @@ This repo provides eveything you need to go from zero to debuging a RP2040 Pico 
 
 ## Motivation
 
-A while I was starting a project that required multiple micro-controllers. I really wanted to use the PICO but I could not get any in stock. I had to settle with the STM32F411 (This was litterally the only chip I could get in stock at the time). This was my first solo embedded project and lets just say I learned a lot with a lot of pain along the way. At the end of the project, I wanted to ensure the next time would be better for me and others on my team. I don't want to go any further on this or this will turn into an even longer novel. However, the big take away is that Pico is cheap and abundant (now), has a solid community and well documented, powerful and easy to use. This is my main motivation for this repo.
+A while back I was starting a project that required multiple micro-controllers. I really wanted to use the PICO but I could not get any in stock. I had to settle with the STM32F411 (This was litterally the only chip I could get in stock at the time). This was my first solo embedded project and lets just say I learned a lot with a lot of pain along the way. At the end of the project, I wanted to ensure the next time would be better for me and others on my team. I don't want to go any further on this or this will turn into an even longer novel. However, the big take away is that Pico is cheap and abundant (now), has a solid community, well documented, powerful and is easy to use. This is my main motivation for this repo.
 
 Once I was able to finally get the Pico, I discovered a lot of the documentation is heavily catered to Raspbian. Nothing wrong with that but not everyone use Raspbian. We, for instance, use Ubuntu 20.04 for our RPI deployments. I wanted to show to how to setup the Pico for anything but Raspbian.
 
@@ -26,7 +26,7 @@ The project directory structure is broken down as follows:
 
 * [.vscode](https://github.com/nixzee/vscode-linux-rp2040-pico-blinky/tree/main/.vscode) - Contains VS Code configurations.
 * build - This is where Cmake and Make artifacts live. This watched by the gitinore.
-* [docker](https://github.com/nixzee/vscode-linux-rp2040-pico-blinky/tree/main/docker) - Contains two Dockerfiles. One to be used to create a toolchain image and the other to build artifacts.
+* [docker](https://github.com/nixzee/vscode-linux-rp2040-pico-blinky/tree/main/docker) - Contains a Dockerfile of the toolchain in order to build artifacts.
 * [hardware](https://github.com/nixzee/vscode-linux-rp2040-pico-blinky/tree/main/hardware) - This directory contains models and images for 3D printing case(s).
 * [src](https://github.com/nixzee/vscode-linux-rp2040-pico-blinky/tree/main/src) - The actual source code. This project has the main and the pico-sdk submodule.
 
@@ -507,7 +507,7 @@ The next time you connect, click the green box again and select your device. You
 
 ## Building and Debug
 
-You are finally ready to build (You technically already did) and debug. This is the butter of the project since now you can get writing code, deploying it, and stepping through it. 
+You are finally ready to build (You technically already did) and debug. This is the butter of the project since now you can get writing code, deploying it, and stepping through it.
 
 1. Grab your two Picos. One should be your Picoprobe, and the other is the target. You will need to wire power, UART, and SWD from the Picoprobe to your target. You can find a diagram [here](https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf#page=58).
 

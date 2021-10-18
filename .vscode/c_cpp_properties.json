@@ -3,7 +3,7 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
+                "${workspaceFolder}/src/**",
                 "${workspaceFolder}/src/pico-sdk/**",
                 "${workspaceFolder}/src/pico-sdk/src/common/pico_stdlib/include/pico/**"
             ],
